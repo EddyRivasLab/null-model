@@ -1,0 +1,18 @@
+How to use this code (With apologies if there's an insulting level of detail):
+
+1) You'll need the development version of Easel.  Go to github.com/EddyRivasLab and clone the easel repo.  CD into the easel directory and do "git checkout -b development remotes/origin/develop"
+
+2) Build easel with:
+a) autoconf
+b) ./configure
+c) make dev <- you need to make the dev variant to build the program that creates dsq format sequence databases
+
+3) Build the code in this directory.
+a) Edit the makefile to specify the path to the version of easel you just built.
+b) make
+
+That will create the skeleton count_occurrences program
+
+4) You need to create versions of your sequence databases in HMMER4 format with the esl_dsqdata_example2 program in your easel directory.  The syntax is esl_dsqdata_example2 <input file in fasta format> <output filename>.  That will create about five files with different suffixes after <output filename>.
+
+To run the count_occurences program do: count_occurrences <number> <output filename>.  Right now it just counts statistics about the input database, but you'll change that.
