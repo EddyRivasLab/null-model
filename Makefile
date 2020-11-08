@@ -1,7 +1,7 @@
 CC     = gcc
 CFLAGS = -O0 -g 
 
-EASELDIR=/home/npcarter/hmmer/h4/lib/easel
+EASELDIR=/Users/dkaxiras/Desktop/lab/null_model/easel
 all:   count_occurences
 
 count_occurences: count_occurences.c Makefile
