@@ -41,15 +41,17 @@ main(int argc, char **argv)
 
    int num_past_residues = 0;
    int count_array_size = 1;
+   int furthest_back = 0;
 
 /* Count the number of ones in history_vector, which is the number of resdues you're
   conditioning on, and compute the size of the count array as 20 ^ number of residues
-  tracked */
+  tracked */ 
 
    for(i = 0; i < 32; i++){
      if(history_vector & 1){ // low bit is set
       num_past_residues++;
       count_array_size = count_array_size * 20;
+      furthest_back = i + 1;
     }
     history_vector = history_vector >> 1;
    }
@@ -58,7 +60,7 @@ main(int argc, char **argv)
   //patterns seen
 
   // Allocate memory for the array. Will signal an error if this fails
-  ESL_ALLOC(pattern_counts, count_array_size);
+  ESL_ALLOC(pattern_counts, count_array_size*8);
 
   /* Ok, this is the main loop. The dsq file reader returns chunks of sequences in
   data structures that look like: 
@@ -81,7 +83,6 @@ typedef struct esl_dsqdata_chunk_s {
   uint64_t num_residues = 0;
   uint8_t *the_sequence; // Sequences are arrays of 8-bit unsigned integers,
   //one byte/residue
-
   while (( status = esl_dsqdata_Read(dd, &chu)) == eslOK)  
     { // Iterate over chunks in file
       for (i = 0; i < chu->N; i++) { // Iterate over sequences in chunk
