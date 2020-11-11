@@ -42,6 +42,8 @@ main(int argc, char **argv)
    int num_past_residues = 0;
    int count_array_size = 1;
    int furthest_back = 0;
+   int look_back_indeces[32];
+   int look_back_idx = 0;
 
 /* Count the number of ones in history_vector, which is the number of resdues you're
   conditioning on, and compute the size of the count array as 20 ^ number of residues
@@ -49,13 +51,21 @@ main(int argc, char **argv)
 
    for(i = 0; i < 32; i++){
      if(history_vector & 1){ // low bit is set
-      num_past_residues++;
-      count_array_size = count_array_size * 20;
-      furthest_back = i + 1;
+      num_past_residues++; // increase number of residues we need to look at
+      count_array_size = count_array_size * 20; // increase size of array
+      furthest_back = i + 1; // update furthest lookback index
+      look_back_indeces[look_back_idx] = i+1;
+      look_back_idx++; 
     }
     history_vector = history_vector >> 1;
    }
 
+  printf("look_back_idx = %d \n", look_back_idx);
+  printf("look_back_indeces: \n");
+  for(i = 0; i < look_back_idx; i++) {
+      printf("%d",look_back_indeces[i]);
+  }
+  printf("\n");
   uint64_t *pattern_counts = NULL;  // This is the array that will hold the counts of 
   //patterns seen
 
@@ -80,6 +90,8 @@ typedef struct esl_dsqdata_chunk_s {
 
   */
 
+  int m; // index into pattern_counts
+
   uint64_t num_residues = 0;
   uint8_t *the_sequence; // Sequences are arrays of 8-bit unsigned integers,
   //one byte/residue
@@ -87,13 +99,21 @@ typedef struct esl_dsqdata_chunk_s {
     { // Iterate over chunks in file
       for (i = 0; i < chu->N; i++) { // Iterate over sequences in chunk
     	  the_sequence = chu->dsq[i]; // Get the sequence 
-        for(int j = 0; j < chu->L[i]; j++){ // Iterate through residues in sequence
-          num_residues++;    
+        for(int j = furthest_back; j < chu->L[i]; j++){ // Iterate through residues in sequence
+          num_residues++;
+          m = 0;
+          for(int k = 0; k < num_past_residues; k++) {
+	     
+              m = m*20 + the_sequence[j-look_back_indeces[k]];
+	  } 
+          pattern_counts[m]++; // increment pattern count for this pattern
+          // printf("m = %d \n", m);
       }
     num_sequences++;
 	  } 
       esl_dsqdata_Recycle(dd, chu);
     }
+    printf("%lu %lu %lu %lu \n", pattern_counts[0], pattern_counts[1], pattern_counts[2], pattern_counts[3]);
     printf("Conditioning on %d residues\n", num_past_residues);
     printf("Saw %d sequences, %lu residues\n", num_sequences,num_residues);
   esl_dsqdata_Close(dd);
