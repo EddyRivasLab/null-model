@@ -1,4 +1,5 @@
 #include <string.h>
+//#include <math.h>
 #include "easel.h"
 #include "esl_dsqdata.h"
 #include "esl_getopts.h"
@@ -39,11 +40,11 @@ main(int argc, char **argv)
 /* Step one: allocate an array of unsigned 64-bit integers that will hold the counts
    of amino patterns that you see */
 
-   int num_past_residues = 0;
-   int count_array_size = 1;
-   int furthest_back = 0;
-   int look_back_indeces[32];
-   int look_back_idx = 0;
+   int num_past_residues = 0; // number of prior residues we look at
+   int count_array_size = 20;  // size of pattern_counts array that holds counts
+   int furthest_back = 0;     // how many residues back is the furthest we have to look
+   int look_back_indeces[32]; // which of the prior residues do we look at
+   int look_back_idx = 0;     // counter for loop below
 
 /* Count the number of ones in history_vector, which is the number of resdues you're
   conditioning on, and compute the size of the count array as 20 ^ number of residues
@@ -59,7 +60,8 @@ main(int argc, char **argv)
     }
     history_vector = history_vector >> 1;
    }
-
+  
+  printf("furthest_back = %d \n", furthest_back);
   printf("look_back_idx = %d \n", look_back_idx);
   printf("look_back_indeces: \n");
   for(i = 0; i < look_back_idx; i++) {
@@ -95,27 +97,90 @@ typedef struct esl_dsqdata_chunk_s {
   uint64_t num_residues = 0;
   uint8_t *the_sequence; // Sequences are arrays of 8-bit unsigned integers,
   //one byte/residue
-  while (( status = esl_dsqdata_Read(dd, &chu)) == eslOK)  
-    { // Iterate over chunks in file
-      for (i = 0; i < chu->N; i++) { // Iterate over sequences in chunk
-    	  the_sequence = chu->dsq[i]; // Get the sequence 
-        for(int j = furthest_back; j < chu->L[i]; j++){ // Iterate through residues in sequence
-          num_residues++;
-          m = 0;
-          for(int k = 0; k < num_past_residues; k++) {
-	     
-              m = m*20 + the_sequence[j-look_back_indeces[k]];
-	  } 
-          pattern_counts[m]++; // increment pattern count for this pattern
-          // printf("m = %d \n", m);
-      }
-    num_sequences++;
-	  } 
-      esl_dsqdata_Recycle(dd, chu);
+
+  // Iterate over chunks in file
+  while (( status = esl_dsqdata_Read(dd, &chu)) == eslOK) {
+     
+      // Iterate over sequences in chunk
+	for (i = 0; i < chu->N; i++) {
+		the_sequence = chu->dsq[i]; // Get the sequence 
+       
+         	// Iterate through residues in sequence
+	 	for(int j = furthest_back; j <= chu->L[i]; j++) {
+			num_residues++;
+          		// j increases by one until it gets to the end of the length of the chunk/sequence
+			int m_last = the_sequence[j];
+			m = 0;
+                        if(m > 19){continue;} // if residue is not one of 20 amino acids, skip
+			
+			int bad_letter = 0; // keep track of if we find a non-amino acid letter
+
+			// iterate over lookback indeces and update m
+          		for(int k = look_back_idx - 1; k >= 0; k--) {
+	     		        if(the_sequence[j-look_back_indeces[k]] > 19){
+				    bad_letter = 1; // found non-amino acid letter
+				    break;} // if residue is not one of 20 amino acids skip it
+				// m is the idx into pattern counts for the specific lookback of this residue
+				m = m*20 + the_sequence[j-look_back_indeces[k]];
+			} 
+
+			// add final residue to m
+			m = m*20 + m_last;
+
+			// increment pattern count for this pattern as long as no bad letters are in midst
+        		if(bad_letter == 0){pattern_counts[m]++;}
+		}
+		num_sequences++;
+	
+	} 
+    	esl_dsqdata_Recycle(dd, chu);
     }
-    printf("%lu %lu %lu %lu \n", pattern_counts[0], pattern_counts[1], pattern_counts[2], pattern_counts[3]);
+
+    int modulo = 0; // keep track of conditionals
+    uint64_t num_conditionals;
+    double *pattern_probabs = NULL;
+    ESL_ALLOC(pattern_probabs, count_array_size*8);
+
+    int meep0 = 29;
+    int meep1 = 27;
+    int meep2 = 28;
+
+    for(int i = 0; i < count_array_size; i++) {
+
+	num_conditionals = 0;	
+	modulo = i - (i % 20);
+	
+	for (int j = 0; j < 20; j++) {
+	    num_conditionals += pattern_counts[modulo + j];
+	    if(i < 3){
+		printf("%d ", modulo + j);
+	    }
+	    
+	}
+	if(i < 3){
+	    printf("\n");
+	}
+	pattern_probabs[i] = pattern_counts[i] / num_conditionals;
+	if(i == 0){meep0 = num_conditionals;}
+	if(i == 1){meep1 = num_conditionals;}
+	if(i == 2){meep2 = num_conditionals;}
+    }
+
+    printf("%g %llu %d \n", pattern_probabs[0], pattern_counts[0], meep0);
+    printf("%g %llu %d \n", pattern_probabs[1], pattern_counts[1], meep1);
+    printf("%g %llu %d \n", pattern_probabs[2], pattern_counts[2], meep2);
+
+//    printf("%llu %llu %llu %llu \n", pattern_counts[0], pattern_counts[1], pattern_counts[2], pattern_counts[3]); 
+//    printf("%llu %llu %llu %llu \n", pattern_counts[4], pattern_counts[5], pattern_counts[6], pattern_counts[7]);
+//    printf("%llu %llu %llu %llu \n", pattern_counts[8], pattern_counts[9], pattern_counts[10], pattern_counts[11]);
+//    printf("%llu %llu %llu %llu \n", pattern_counts[12], pattern_counts[13], pattern_counts[14], pattern_counts[15]);
+//    printf("%llu %llu %llu %llu \n", pattern_counts[16], pattern_counts[17], pattern_counts[18], pattern_counts[19]);
+//    printf("%llu %llu %llu %llu ", pattern_counts[20], pattern_counts[21], pattern_counts[22], pattern_counts[23]);
+//    printf("%llu %llu %llu %llu ", pattern_counts[24], pattern_counts[25], pattern_counts[26], pattern_counts[27]);
+//    printf("%llu \n", pattern_counts[28]);
+    printf("count_array_size = %d \n", count_array_size);
     printf("Conditioning on %d residues\n", num_past_residues);
-    printf("Saw %d sequences, %lu residues\n", num_sequences,num_residues);
+    printf("Saw %d sequences, %llu residues\n", num_sequences,num_residues);
   esl_dsqdata_Close(dd);
   esl_getopts_Destroy(go);
   exit(0);
@@ -123,8 +188,4 @@ typedef struct esl_dsqdata_chunk_s {
   ERROR:
   esl_fail("Unable to allocate memory\n", NULL);
 }
-
-
-
-
 
