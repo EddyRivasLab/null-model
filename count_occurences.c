@@ -1,5 +1,4 @@
 #include <string.h>
-//#include <math.h>
 #include "easel.h"
 #include "esl_dsqdata.h"
 #include "esl_getopts.h"
@@ -141,10 +140,12 @@ typedef struct esl_dsqdata_chunk_s {
     double *pattern_probabs = NULL;
     ESL_ALLOC(pattern_probabs, count_array_size*8);
 
+    //for printing purposes
     int meep0 = 29;
     int meep1 = 27;
     int meep2 = 28;
 
+    // cycle through each pattern
     for(int i = 0; i < count_array_size; i++) {
 
 	num_conditionals = 0;	
@@ -152,23 +153,19 @@ typedef struct esl_dsqdata_chunk_s {
 	
 	for (int j = 0; j < 20; j++) {
 	    num_conditionals += pattern_counts[modulo + j];
-	    if(i < 3){
-		printf("%d ", modulo + j);
-	    }
-	    
 	}
-	if(i < 3){
-	    printf("\n");
-	}
-	pattern_probabs[i] = pattern_counts[i] / num_conditionals;
+	
+	pattern_probabs[i] = (float) pattern_counts[i] / (float) num_conditionals;
+
+	// for printing purposes
 	if(i == 0){meep0 = num_conditionals;}
 	if(i == 1){meep1 = num_conditionals;}
 	if(i == 2){meep2 = num_conditionals;}
     }
 
-    printf("%g %llu %d \n", pattern_probabs[0], pattern_counts[0], meep0);
-    printf("%g %llu %d \n", pattern_probabs[1], pattern_counts[1], meep1);
-    printf("%g %llu %d \n", pattern_probabs[2], pattern_counts[2], meep2);
+    printf("%f %llu %d \n", pattern_probabs[0], pattern_counts[0], meep0);
+    printf("%lf %llu %d \n", pattern_probabs[1], pattern_counts[1], meep1);
+    printf("%f %llu %d \n", pattern_probabs[2], pattern_counts[2], meep2);
 
 //    printf("%llu %llu %llu %llu \n", pattern_counts[0], pattern_counts[1], pattern_counts[2], pattern_counts[3]); 
 //    printf("%llu %llu %llu %llu \n", pattern_counts[4], pattern_counts[5], pattern_counts[6], pattern_counts[7]);
