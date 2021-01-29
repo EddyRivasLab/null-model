@@ -105,7 +105,11 @@ typedef struct esl_dsqdata_chunk_s {
       // Iterate over sequences in chunk
 	for (i = 0; i < chu->N; i++) {
 		the_sequence = chu->dsq[i]; // Get the sequence 
-       
+                
+		for(int j = 0; j < furthest_back; j++){
+			if(the_sequence[j] > 20 && the_sequence[j] < 27){num_bad_letters++;}
+		}		
+
          	// Iterate through residues in sequence
 	 	for(int j = furthest_back; j <= chu->L[i]; j++) {
 			num_residues++;
@@ -135,6 +139,7 @@ typedef struct esl_dsqdata_chunk_s {
 			// increment pattern count for this pattern as long as no bad letters are in midst
         		if(bad_letter == 0){pattern_counts[m]++;}
 		}
+		num_residues += furthest_back;
 		num_sequences++;
 	} 
     	esl_dsqdata_Recycle(dd, chu);

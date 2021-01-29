@@ -63,7 +63,7 @@ main(int argc, char **argv)
    }
 
   FILE *fptr;
-  fptr = fopen("../databases/cond_probabs_c.txt","w");  
+  fptr = fopen("../databases/cond_probabs_c_rando.txt","w");  
   fprintf(fptr,"training dataset: swissprot\n");
   fprintf(fptr,"look back idx: ");
 
@@ -101,10 +101,13 @@ typedef struct esl_dsqdata_chunk_s {
   */
 
   int m; // index into pattern_counts
+  int bad_letter; // bool to track if idx includes bad letters
 
   uint64_t num_residues = 0;
   uint8_t *the_sequence; // Sequences are arrays of 8-bit unsigned integers,
   //one byte/residue
+
+  int num_bad_letters = 0; // keep track of how many non-amino-acid residues there are in dataset
 
   // Iterate over chunks in file
   while (( status = esl_dsqdata_Read(dd, &chu)) == eslOK) {
@@ -112,16 +115,20 @@ typedef struct esl_dsqdata_chunk_s {
       // Iterate over sequences in chunk
 	for (i = 0; i < chu->N; i++) {
 		the_sequence = chu->dsq[i]; // Get the sequence 
+
+		for(int j = 0; j < furthest_back && j <= chu->L[i]; j++){
+                        if(the_sequence[j] > 20 && the_sequence[j] < 27){num_bad_letters++;}
+                	if(the_sequence[j] != 20 && the_sequence[j] < 27){num_residues++;}
+		}
        
          	// Iterate through residues in sequence
 	 	for(int j = furthest_back; j <= chu->L[i]; j++) {
-			num_residues++;
-          		// j increases by one until it gets to the end of the length of the chunk/sequence
-			int m_last = the_sequence[j];
-			m = 0;
-                        if(m > 19){continue;} // if residue is not one of 20 amino acids, skip
-			
-			int bad_letter = 0; // keep track of if we find a non-amino acid letter
+			int m_last = the_sequence[j]; // get residue of interest
+			if(m_last != 20 && m_last < 27){num_residues++;} 
+                        if(m_last > 20 && m_last < 27){num_bad_letters++;} // count number of non-amino acids 
+			if(m_last > 19){continue;} // if residue is not one of 20 amino acids, skip
+			m = 0; // reset pattern_counts access index
+			bad_letter = 0; // keep track of if we find a non-amino acid letter
 
 			// iterate over lookback indeces and update m
           		for(int k = look_back_idx - 1; k >= 0; k--) {
@@ -138,8 +145,7 @@ typedef struct esl_dsqdata_chunk_s {
 			// increment pattern count for this pattern as long as no bad letters are in midst
         		if(bad_letter == 0){pattern_counts[m]++;}
 		}
-		num_sequences++;
-	
+		num_sequences++; // count sequences
 	} 
     	esl_dsqdata_Recycle(dd, chu);
     }
@@ -178,8 +184,9 @@ typedef struct esl_dsqdata_chunk_s {
     printf("%f %llu %d \n\n", pattern_probabs[2], pattern_counts[2], meep2);
     printf("count_array_size = %d \n", count_array_size);
     printf("Conditioning on %d residues\n", num_past_residues);
-    printf("Saw %d sequences, %llu residues\n", num_sequences,num_residues);
-
+    printf("Saw %d sequences, %llu amino acid residues\n", num_sequences, num_residues);
+    printf("Number of non-amino-acid residues in dataset: %d\n", num_bad_letters);
+    printf("%d\n",look_back_idx);
     fclose(fptr);  
     
   esl_dsqdata_Close(dd);
