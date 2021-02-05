@@ -86,17 +86,17 @@ main(int argc, char **argv)
   // fprintf(fptr,"training dataset: %s\n", training_set_name);
   // fprintf(fptr,"look back idx: ");
 
-  // ----------------------------------------------
-  // open file to write pattern counts for checking
-  FILE *pcountsfile;
-  pcountsfile = fopen("../databases/count_occurs_rando.txt","w");
-  fprintf(pcountsfile,"training dataset: swissprot\n");
-  fprintf(pcountsfile,"look back idx: ");
-  for(i = 0; i < look_back_idx; i++) {
-      fprintf(pcountsfile,"%d",look_back_indeces[i]);
-  }
-  fprintf(pcountsfile,"\n");
-  // ----------------------------------------------
+  // // ----------------------------------------------
+  // // open file to write pattern counts for checking
+  // FILE *pcountsfile;
+  // pcountsfile = fopen("../databases/count_occurs_rando.txt","w");
+  // fprintf(pcountsfile,"training dataset: swissprot\n");
+  // fprintf(pcountsfile,"look back idx: ");
+  // for(i = 0; i < look_back_idx; i++) {
+  //     fprintf(pcountsfile,"%d",look_back_indeces[i]);
+  // }
+  // fprintf(pcountsfile,"\n");
+  // // ----------------------------------------------
 
   // add lookback index to file to keep track
   printf("furthest_back = %d \n", furthest_back);
@@ -233,12 +233,13 @@ main(int argc, char **argv)
       fprintf(fptr,"%f\n",((float) pattern_counts_marginal[i] + 1.0) / ((float) num_residues - num_bad_letters + 20.0));
   }
 
-  // --------------------------------------------------
-  // output pattern counts to file for checking
-  for(i = 0; i < count_array_size; i++) {
-      fprintf(pcountsfile,"%llu\n", pattern_counts[i]);
-  }
-  // --------------------------------------------------
+  // // --------------------------------------------------
+  // // output pattern counts to file for checking
+  // for(i = 0; i < count_array_size; i++) {
+  //     fprintf(pcountsfile,"%llu\n", pattern_counts[i]);
+  // }
+  // fclose(pcountsfile);
+  // // --------------------------------------------------
 
   // print first few probabilities for spot checking
   printf("\nhead probabilities\n");
@@ -254,7 +255,6 @@ main(int argc, char **argv)
 
   // close printing file
   fclose(fptr);
-  fclose(pcountsfile);
 
   esl_dsqdata_Close(dd);
   esl_getopts_Destroy(go);
