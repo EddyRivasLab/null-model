@@ -17,7 +17,7 @@ main(int argc, char **argv)
 
   /* easel convenience code for managing arguments to functions */
   ESL_GETOPTS    *go      = esl_getopts_CreateDefaultApp(options, 3, argc, argv, banner, usage);
-  int status, i;
+  int status, i, j, k;
   int num_sequences = 0;
   ESL_DSQDATA *dd = NULL;
 
@@ -77,7 +77,7 @@ main(int argc, char **argv)
   ESL_ALLOC(marginal_probabs, count_array_size*8);
 
   /* read each conditional probability in the cond_probabs file */
-  for(int i = 0; i < count_array_size; i++){
+  for(i = 0; i < count_array_size; i++){
       fscanf(cond_probab_file,"%lf\n", &(pattern_probabs[i]));
   }
 
@@ -87,7 +87,7 @@ main(int argc, char **argv)
   // }
 
   /* read each marginal probability in the cond_probabs file */
-  for(int i = 0; i < 20; i++){
+  for(i = 0; i < 20; i++){
       fscanf(cond_probab_file,"%lf\n", &(marginal_probabs[i]));
   }
 
@@ -135,7 +135,7 @@ main(int argc, char **argv)
   while (( status = esl_dsqdata_Read(dd, &chu)) == eslOK) {
 
       // iterate over sequences in chunk
-    	for (int i = 0; i < chu->N; i++) {
+    	for (i = 0; i < chu->N; i++) {
       		the_sequence = chu->dsq[i]; // Get the sequence
           num_aa_in_seq = 0;
 
@@ -145,7 +145,7 @@ main(int argc, char **argv)
             }
 
           // keep track of residues at the beginning
-      		for(int j = 1; j < furthest_back+1 && j <= chu->L[i]; j++){
+      		for(j = 1; j < furthest_back+1 && j <= chu->L[i]; j++){
             // printf("hi %d\n",the_sequence[j]);
               if(the_sequence[j] > 20 && the_sequence[j] < 27){num_bad_letters++;}
               if(the_sequence[j] != 20 && the_sequence[j] < 27){num_residues++;}
@@ -159,7 +159,7 @@ main(int argc, char **argv)
       		}
 
           // iterate through residues in sequence
-      	 	for(int j = furthest_back+1; j <= chu->L[i]; j++) {
+      	 	for(j = furthest_back+1; j <= chu->L[i]; j++) {
         			num_residues++;
         			int m_last = the_sequence[j];
         			m = 0;
@@ -169,7 +169,7 @@ main(int argc, char **argv)
         			int bad_letter = 0; // keep track of if we find a non-amino acid letter
 
         			// iterate over lookback indeces and update m
-              for(int k = look_back_idx - 1; k >= 0; k--) {
+              for(k = look_back_idx - 1; k >= 0; k--) {
                   if(the_sequence[j-look_back_indeces[k]] > 19){
                       bad_letter = 1; // found non-amino acid letter
                       break; // if residue is not one of 20 amino acids skip it

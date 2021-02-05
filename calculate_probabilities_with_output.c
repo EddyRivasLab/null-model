@@ -20,7 +20,7 @@ main(int argc, char **argv)
   /* This is some Easel convenience code for managing arguments to functions */
   ESL_GETOPTS    *go      = esl_getopts_CreateDefaultApp(options, 2, argc, argv, banner, usage);
 
-  int status, i;
+  int status, i, j, k;
   int num_sequences = 0;
   ESL_DSQDATA *dd = NULL;
 
@@ -153,7 +153,7 @@ main(int argc, char **argv)
       		the_sequence = chu->dsq[i]; // Get the sequence
 
           // keep track of residues at the beginning
-      		for(int j = 1; j < furthest_back+1 && j <= chu->L[i]; j++){
+      		for(j = 1; j < furthest_back+1 && j <= chu->L[i]; j++){
               int m_last = the_sequence[j];
               if(m_last > 20 && m_last < 27){ num_bad_letters++; } // if it's a bad letter increase the bad letter count
               if(m_last != 20 && m_last < 27){ num_residues++; } // if its a residue, increase number of residues seen
@@ -161,7 +161,7 @@ main(int argc, char **argv)
       		}
 
           // Iterate through residues in sequence
-      	 	for(int j = furthest_back + 1; j <= chu->L[i]; j++) {
+      	 	for(j = furthest_back + 1; j <= chu->L[i]; j++) {
         			int m_last = the_sequence[j]; // get residue of interest
               if(m_last > 20 && m_last < 27){ num_bad_letters++; } // count number of non-amino acids
         			if(m_last != 20 && m_last < 27){ num_residues++; } // if residue increase count
@@ -173,7 +173,7 @@ main(int argc, char **argv)
               int bad_letter = 0; // bool to track if idx includes bad letters
 
         			// iterate over lookback indeces and update m
-              for(int k = look_back_idx - 1; k >= 0; k--) {
+              for(k = look_back_idx - 1; k >= 0; k--) {
 
                   // if residue is not one of 20 amino acids skip it
       	     		  if(the_sequence[j-look_back_indeces[k]] > 19){
@@ -210,13 +210,13 @@ main(int argc, char **argv)
   int denominators[10];
 
   // cycle through each pattern
-  for(int i = 0; i < count_array_size; i++) {
+  for(i = 0; i < count_array_size; i++) {
 
     	num_conditionals = 0;
     	modulo = i - (i % 20);
 
       // calculate denominator
-    	for (int j = 0; j < 20; j++) {
+    	for (j = 0; j < 20; j++) {
     	    num_conditionals += pattern_counts[modulo + j];
     	}
 
@@ -229,20 +229,20 @@ main(int argc, char **argv)
   }
 
   // add marginal probabilities to end of file and laplace smooth for consistency
-  for(int i = 0; i < 20; i++){
+  for(i = 0; i < 20; i++){
       fprintf(fptr,"%f\n",((float) pattern_counts_marginal[i] + 1.0) / ((float) num_residues - num_bad_letters + 20.0));
   }
 
   // --------------------------------------------------
   // output pattern counts to file for checking
-  for(int i = 0; i < count_array_size; i++) {
+  for(i = 0; i < count_array_size; i++) {
       fprintf(pcountsfile,"%llu\n", pattern_counts[i]);
   }
   // --------------------------------------------------
 
   // print first few probabilities for spot checking
   printf("\nhead probabilities\n");
-  for(int k = 0; k < denom_len; k++){
+  for(k = 0; k < denom_len; k++){
       printf("%d: %f %llu %d \n", k, pattern_probabs[k], pattern_counts[k], denominators[k]);
   }
 
